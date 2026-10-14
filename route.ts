@@ -1,2 +1,14 @@
-import {NextResponse} from 'next/server';import {currentUser} from '../../../../lib/auth';import {database} from '../../../../lib/db';import {fail,serverError} from '../../../../lib/http';
-export async function GET(){try{const u=await currentUser();if(!u||u.role!=='admin')return fail('Forbidden',403);const q=await database().query("SELECT (SELECT count(*)::int FROM users) AS users,(SELECT count(*)::int FROM conversations) AS conversations,(SELECT count(*)::int FROM usage_events WHERE status='completed') AS completed_requests,(SELECT count(*)::int FROM usage_events WHERE status='failed') AS failed_requests");return NextResponse.json({stats:q.rows[0]});}catch(e){return serverError(e);}}
+import {NextResponse} from 'next/server';
+import {database} from '../../../lib/db';
+export const runtime='nodejs';
+export const dynamic='force-dynamic';
+export async function GET(){
+ try {
+  const result=await database().query("SELECT to_regclass('public.users') AS users_table, to_regclass('public.sessions') AS sessions_table, to_regclass('public.projects') AS projects_table");
+  const data=result.rows[0];
+  if(!data?.users_table||!data?.sessions_table||!data?.projects_table)throw new Error('Missing database tables');
+  return NextResponse.json({status:'ok',database:'ready'},{headers:{'Cache-Control':'no-store'}});
+ }catch{
+  return NextResponse.json({status:'unavailable'},{status:503,headers:{'Cache-Control':'no-store'}});
+ }
+}
