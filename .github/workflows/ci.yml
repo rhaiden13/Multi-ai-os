@@ -1,32 +1,17 @@
-
-name: Multi-AI OS CI
-
+name: Source and Build Checks
 on:
   push:
     branches: [main]
   pull_request:
-
 jobs:
-  test-and-build:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test
-
-      - name: TypeScript check
-        run: npm run lint
-
-      - name: Build application
-        run: npm run build
-        
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npm run lint
+      - run: npm run build
